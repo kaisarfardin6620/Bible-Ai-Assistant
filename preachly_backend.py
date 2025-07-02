@@ -5,6 +5,8 @@ from functools import lru_cache
 import openai
 import requests
 from typing import Dict, List, Tuple, Optional
+from dotenv import load_dotenv
+load_dotenv()
 
 # --- Setup Logging ---
 logging.basicConfig(level=logging.INFO)
@@ -19,12 +21,23 @@ if not OPENAI_API_KEY or not BIBLE_API_KEY:
     raise ValueError("Missing required environment variables: OPENAI_API_KEY and/or BIBLE_API_KEY")
 
 BIBLE_IDS = {
-    "NEW INTERNATIONAL VERSION": os.getenv("BIBLE_ID_NIV"),
+    # Short and long names for each supported version, all upper-case for consistency
+    "KJV": os.getenv("BIBLE_ID_KJV"),
+    "KING JAMES VERSION": os.getenv("BIBLE_ID_KJV"),
+    "WEB": os.getenv("BIBLE_ID_WEB"),
+    "WORLD ENGLISH BIBLE": os.getenv("BIBLE_ID_WEB"),
+    "ASV": os.getenv("BIBLE_ID_ASV"),
+    "AMERICAN STANDARD VERSION": os.getenv("BIBLE_ID_ASV"),
+    "ESV": os.getenv("BIBLE_ID_ESV"),
+    "ENGLISH STANDARD VERSION": os.getenv("BIBLE_ID_ESV"),
+    "NLT": os.getenv("BIBLE_ID_NLT"),
+    "NEW LIVING TRANSLATION": os.getenv("BIBLE_ID_NLT"),
     "NIV": os.getenv("BIBLE_ID_NIV"),
-    "REVISED STANDARD VERSION CATHOLIC EDITION": os.getenv("BIBLE_ID_RSVCE"),
+    "NEW INTERNATIONAL VERSION": os.getenv("BIBLE_ID_NIV"),
     "RSVCE": os.getenv("BIBLE_ID_RSVCE"),
-    "CHRISTIAN STANDARD BIBLE": os.getenv("BIBLE_ID_CSB"),
-    "CSB": os.getenv("BIBLE_ID_CSB")
+    "REVISED STANDARD VERSION CATHOLIC EDITION": os.getenv("BIBLE_ID_RSVCE"),
+    "CSB": os.getenv("BIBLE_ID_CSB"),
+    "CHRISTIAN STANDARD BIBLE": os.getenv("BIBLE_ID_CSB")
 }
 
 BOOK_ABBREVIATIONS = {
@@ -157,6 +170,132 @@ def parse_bible_reference(input_text: str) -> Dict[str, Optional[str]]:
 
 # Removed initialize_conversation as a standalone function because it's now internal
 
+
+def get_mock_user_data():
+    """
+    Returns a mock user data dictionary representing onboarding selections.
+    This can be replaced with real user input collection in production.
+    """
+    return {
+        # Faith Goal logic: set based on user answers (example: 'Confidence', 'Scripture Knowledge', 'Inspiration')
+        "faith_goal": "Confidence",  # or "Scripture Knowledge", "Inspiration"
+        # Onboarding questions and options
+        "onboarding_questions": [
+            {
+                "question": "What’s holding you back from confidently living and sharing your faith?",
+                "options": [
+                    {"text": "I feel unsure how to respond to questions or doubts about my faith.", "goal": "Confidence"},
+                    {"text": "I struggle to find the right words to share scripture effectively.", "goal": "Scripture Knowledge"},
+                    {"text": "I feel I need a deeper connection to God’s word before I can inspire others.", "goal": "Inspiration"}
+                ]
+            },
+            {
+                "question": "How do you hope to grow in your walk with God?",
+                "options": [
+                    {"text": "I want to learn how to speak about my faith with confidence and clarity.", "goal": "Confidence"},
+                    {"text": "I want to strengthen my understanding of scripture and apply it to my life.", "goal": "Scripture Knowledge"},
+                    {"text": "I want to inspire and encourage others through my faith journey.", "goal": "Inspiration"}
+                ]
+            },
+            {
+                "question": "What would help you feel more equipped to achieve your faith goals?",
+                "options": [
+                    {"text": "Practical tools to respond to objections and questions about faith.", "goal": "Confidence"},
+                    {"text": "Daily scripture insights that I can share with others or reflect on.", "goal": "Inspiration"},
+                    {"text": "Clear and inspired guidance rooted in scripture.", "goal": "Scripture Knowledge"}
+                ]
+            }
+        ],
+        # Denominations
+        "denomination": "Protestant",  # e.g., "Protestant", "Catholic", "Orthodox", "Baptist", etc.
+        "denomination_options": [
+            "Catholic", "Protestant", "Baptist", "Nondenominational", "Methodist", "Pentecostal",
+            "Lutheran", "Evangelical", "Adventist", "Orthodox", "Other"
+        ],
+        # Bible Versions
+        "bible_version": "KJV",  # e.g., "KJV", "WEB", "ASV", "ESV", "NLT"
+        "bible_version_options": [
+            "KJV (King James Version)",
+            "WEB (World English Bible)",
+            "ASV (American Standard Version)",
+            "NIV (New International Version)",
+            "RSVCE (Revised Standard Version Catholic Edition)",
+            "CSB (Christian Standard Bible)"
+        ],
+        # Personalization reasons (legacy, can be mapped to faith goals)
+        "personalization_reasons": [
+            "Fear of sharing faith",
+            "Struggling to study",
+            "Needing deeper connection"
+        ],
+        "tone_choices": [
+            {
+                "name": "Clear and Hopeful",
+                "description": "Simple, direct, and encouraging. Speaks to God’s love and faithfulness in an easily understood way.",
+                "example": "God allows us to choose because He loves us deeply. Even in our struggles, His grace is always enough."
+            },
+            {
+                "name": "Dynamic and Powerful",
+                "description": "Emotive, bold, and filled with vivid imagery. Designed to inspire and energize.",
+                "example": "Sin may exist, but so does God’s unstoppable power to redeem, restore, and turn every story into a victory."
+            },
+            {
+                "name": "Practical and Everyday",
+                "description": "Grounded and solution-oriented, focusing on how faith applies to daily life.",
+                "example": "Sometimes life feels messy, but God uses even our mistakes to shape us and teach us how to walk in His ways."
+            },
+            {
+                "name": "Encouraging and Purposeful",
+                "description": "Focuses on meaning and growth through challenges, using affirming and positive language.",
+                "example": "It’s not always easy to understand, but God allows challenges so we can grow stronger in faith and closer to Him."
+            },
+            {
+                "name": "Uplifting and Optimistic",
+                "description": "Highlights hope and joy even in adversity, emphasizing God’s ongoing provision.",
+                "example": "Even in a broken world, God’s love shines through. His plan for good will always outweigh the pain we see now."
+            },
+            {
+                "name": "Scholarly and Rational",
+                "description": "Appeals to logic and reason, using well-structured arguments and historical/theological insights.",
+                "example": "Sin entered through humanity’s choices, but God’s plan through Jesus shows us the depth of His justice and mercy."
+            },
+            {
+                "name": "Warm and Relatable",
+                "description": "Conversational, empathetic, and emotionally resonant. Speaks to the heart with compassion.",
+                "example": "That’s a tough question—it’s okay to wrestle with it. What matters most is knowing God is with you, no matter what."
+            },
+            {
+                "name": "Passionate and Empowering",
+                "description": "Focused on spiritual growth and perseverance, emphasizing strength and action.",
+                "example": "Sin doesn’t define us—God’s purpose does. You have the power to walk boldly in the freedom He’s given you."
+            }
+        ],
+        "bible_familiarity_options": [
+            {
+                "level": "None",
+                "title": "New to the Word? No problem!",
+                "description": "Simplified Responses\nPreachly will break things down in an easy-to-understand way, offering clear, simple explanations to help you build a strong foundation."
+            },
+            {
+                "level": "A Little",
+                "title": "A great foundation! Let’s go deeper",
+                "description": "You have some knowledge, and we’ll build on it!"
+            },
+            {
+                "level": "A Lot",
+                "title": "Ready for the deep dive?",
+                "description": "Multi-Argumentation Responses\nPreachly will provide multi-layered explanations, exploring different perspectives, theological arguments, and scriptural connections to help you sharpen your understanding."
+            }
+        ],
+        "bible_familiarity": {
+            "level": "A Little",
+            "title": "A great foundation! Let’s go deeper",
+            "description": "You have some knowledge, and we’ll build on it!"
+        },
+        "bible_version": "NEW INTERNATIONAL VERSION"  # e.g., "NEW INTERNATIONAL VERSION", "REVISED STANDARD VERSION CATHOLIC EDITION", "CHRISTIAN STANDARD BIBLE"
+    }
+
+
 def get_preachly_response(user_input: str, conversation: Optional[List[Dict[str, str]]] = None, is_audio: bool = False) -> Tuple[str, List[Dict[str, str]]]:
     """
     Processes a user's message and returns the AI's response and updated conversation.
@@ -213,3 +352,4 @@ def get_preachly_response(user_input: str, conversation: Optional[List[Dict[str,
     # Update conversation with AI response
     conversation.append({"role": "assistant", "content": bot_reply})
     return bot_reply, conversation
+
