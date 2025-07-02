@@ -63,6 +63,87 @@ def get_bible_verse(book, chapter, verse, version):
     else:
         return f"Sorry, could not retrieve the verse (Error {response.status_code})."
 
+
+# --- Mock User Data Function ---
+def get_mock_user_data():
+    """
+    Returns a mock user data dictionary representing onboarding selections.
+    This can be replaced with real user input collection in production.
+    """
+    return {
+        "faith_goal":  "Clarity to overcome doubts",  # "Confidence to share my beliefs"
+        "denomination": "Protestant",  # e.g., "Protestant", "Catholic", "Orthodox"
+        "personalization_reasons": [
+            "Fear of sharing faith",
+            "Struggling to study",
+            "Needing deeper connection"
+        ],
+        
+        
+        "tone_choices": [
+            {
+                "name": "Clear and Hopeful",
+                "description": "Simple, direct, and encouraging. Speaks to God’s love and faithfulness in an easily understood way.",
+                "example": "God allows us to choose because He loves us deeply. Even in our struggles, His grace is always enough."
+            },
+            {
+                "name": "Dynamic and Powerful",
+                "description": "Emotive, bold, and filled with vivid imagery. Designed to inspire and energize.",
+                "example": "Sin may exist, but so does God’s unstoppable power to redeem, restore, and turn every story into a victory."
+            },
+            {
+                "name": "Practical and Everyday",
+                "description": "Grounded and solution-oriented, focusing on how faith applies to daily life.",
+                "example": "Sometimes life feels messy, but God uses even our mistakes to shape us and teach us how to walk in His ways."
+            },
+            {
+                "name": "Encouraging and Purposeful",
+                "description": "Focuses on meaning and growth through challenges, using affirming and positive language.",
+                "example": "It’s not always easy to understand, but God allows challenges so we can grow stronger in faith and closer to Him."
+            },
+            {
+                "name": "Uplifting and Optimistic",
+                "description": "Highlights hope and joy even in adversity, emphasizing God’s ongoing provision.",
+                "example": "Even in a broken world, God’s love shines through. His plan for good will always outweigh the pain we see now."
+            },
+            {
+                "name": "Scholarly and Rational",
+                "description": "Appeals to logic and reason, using well-structured arguments and historical/theological insights.",
+                "example": "Sin entered through humanity’s choices, but God’s plan through Jesus shows us the depth of His justice and mercy."
+            },
+            {
+                "name": "Warm and Relatable",
+                "description": "Conversational, empathetic, and emotionally resonant. Speaks to the heart with compassion.",
+                "example": "That’s a tough question—it’s okay to wrestle with it. What matters most is knowing God is with you, no matter what."
+            },
+            {
+                "name": "Passionate and Empowering",
+                "description": "Focused on spiritual growth and perseverance, emphasizing strength and action.",
+                "example": "Sin doesn’t define us—God’s purpose does. You have the power to walk boldly in the freedom He’s given you."
+            }
+        ],
+        
+        "bible_familiarity_options": [
+            {
+                "level": "None",
+                "title": "New to the Word? No problem!",
+                "description": "Simplified Responses\nPreachly will break things down in an easy-to-understand way, offering clear, simple explanations to help you build a strong foundation."
+            },
+            {
+                "level": "A Little",
+                "title": "A great foundation! Let’s go deeper",
+                "description": "You have some knowledge, and we’ll build on it!"
+            },
+            {
+                "level": "A Lot",
+                "title": "Ready for the deep dive?",
+                "description": "Multi-Argumentation Responses\nPreachly will provide multi-layered explanations, exploring different perspectives, theological arguments, and scriptural connections to help you sharpen your understanding."
+            }
+        ],
+        
+        "bible_version": "NEW INTERNATIONAL VERSION"  # e.g., "NEW INTERNATIONAL VERSION", "REVISED STANDARD VERSION CATHOLIC EDITION", "CHRISTIAN STANDARD BIBLE"
+    }
+ 
 response_cache = {}
 
 def chat_with_bible_bot(conversation):
@@ -74,9 +155,33 @@ def chat_with_bible_bot(conversation):
         print()  # newline after streaming ends
         return cached_reply
     try:
+        # --- Inject user data into the system prompt for personalization ---
+        user_data = get_mock_user_data()
+
+        # Format tone choices with descriptions for the prompt
+        tone_lines = []
+        for tone in user_data['tone_choices']:
+            tone_lines.append(f"  - {tone['name']}: {tone['description']} (Example: {tone['example']})")
+        # Bible familiarity
+        familiarity = user_data['bible_familiarity']
+        personalized_system_prompt = SYSTEM_PROMPT + "\n" + (
+            f"\nUser Profile:\n"
+            f"- Faith Goal: {user_data['faith_goal']}\n"
+            f"- Denomination: {user_data['denomination']}\n"
+            f"- Personalization Reasons: {', '.join(user_data['personalization_reasons'])}\n"
+            f"- Tone Choices:\n" + "\n".join(tone_lines) + "\n"
+            f"- Bible Familiarity: {familiarity['level']} — {familiarity['description']}\n"
+            f"- Bible Version: {user_data['bible_version']}\n"
+        )
+
+        # Replace the system prompt in the conversation with the personalized one
+        conversation_with_profile = conversation.copy()
+        if conversation_with_profile and conversation_with_profile[0]["role"] == "system":
+            conversation_with_profile[0]["content"] = personalized_system_prompt
+
         response_stream = client.chat.completions.create(
             model="gpt-4-turbo",  # or your preferred GPT-4 Turbo model
-            messages=conversation,
+            messages=conversation_with_profile,
             temperature=0.7,
             max_tokens=300,
             stream=True
