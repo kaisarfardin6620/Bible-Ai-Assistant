@@ -10,9 +10,24 @@ load_dotenv()
 # --- API KEYS & CONSTANTS ---
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 BIBLE_API_KEY = os.getenv("BIBLE_API_KEY")
+
 BIBLE_IDS = {
+    # Short and long names for each supported version, all upper-case for consistency
+    "KJV": os.getenv("BIBLE_ID_KJV"),
+    "KING JAMES VERSION": os.getenv("BIBLE_ID_KJV"),
+    "WEB": os.getenv("BIBLE_ID_WEB"),
+    "WORLD ENGLISH BIBLE": os.getenv("BIBLE_ID_WEB"),
+    "ASV": os.getenv("BIBLE_ID_ASV"),
+    "AMERICAN STANDARD VERSION": os.getenv("BIBLE_ID_ASV"),
+    "ESV": os.getenv("BIBLE_ID_ESV"),
+    "ENGLISH STANDARD VERSION": os.getenv("BIBLE_ID_ESV"),
+    "NLT": os.getenv("BIBLE_ID_NLT"),
+    "NEW LIVING TRANSLATION": os.getenv("BIBLE_ID_NLT"),
+    "NIV": os.getenv("BIBLE_ID_NIV"),
     "NEW INTERNATIONAL VERSION": os.getenv("BIBLE_ID_NIV"),
+    "RSVCE": os.getenv("BIBLE_ID_RSVCE"),
     "REVISED STANDARD VERSION CATHOLIC EDITION": os.getenv("BIBLE_ID_RSVCE"),
+    "CSB": os.getenv("BIBLE_ID_CSB"),
     "CHRISTIAN STANDARD BIBLE": os.getenv("BIBLE_ID_CSB")
 }
 
@@ -71,15 +86,57 @@ def get_mock_user_data():
     This can be replaced with real user input collection in production.
     """
     return {
-        "faith_goal":  "Clarity to overcome doubts",  # "Confidence to share my beliefs"
-        "denomination": "Protestant",  # e.g., "Protestant", "Catholic", "Orthodox"
+        # Faith Goal logic: set based on user answers (example: 'Confidence', 'Scripture Knowledge', 'Inspiration')
+        "faith_goal": "Confidence",  # or "Scripture Knowledge", "Inspiration"
+        # Onboarding questions and options
+        "onboarding_questions": [
+            {
+                "question": "What’s holding you back from confidently living and sharing your faith?",
+                "options": [
+                    {"text": "I feel unsure how to respond to questions or doubts about my faith.", "goal": "Confidence"},
+                    {"text": "I struggle to find the right words to share scripture effectively.", "goal": "Scripture Knowledge"},
+                    {"text": "I feel I need a deeper connection to God’s word before I can inspire others.", "goal": "Inspiration"}
+                ]
+            },
+            {
+                "question": "How do you hope to grow in your walk with God?",
+                "options": [
+                    {"text": "I want to learn how to speak about my faith with confidence and clarity.", "goal": "Confidence"},
+                    {"text": "I want to strengthen my understanding of scripture and apply it to my life.", "goal": "Scripture Knowledge"},
+                    {"text": "I want to inspire and encourage others through my faith journey.", "goal": "Inspiration"}
+                ]
+            },
+            {
+                "question": "What would help you feel more equipped to achieve your faith goals?",
+                "options": [
+                    {"text": "Practical tools to respond to objections and questions about faith.", "goal": "Confidence"},
+                    {"text": "Daily scripture insights that I can share with others or reflect on.", "goal": "Inspiration"},
+                    {"text": "Clear and inspired guidance rooted in scripture.", "goal": "Scripture Knowledge"}
+                ]
+            }
+        ],
+        # Denominations
+        "denomination": "Protestant",  # e.g., "Protestant", "Catholic", "Orthodox", "Baptist", etc.
+        "denomination_options": [
+            "Catholic", "Protestant", "Baptist", "Nondenominational", "Methodist", "Pentecostal",
+            "Lutheran", "Evangelical", "Adventist", "Orthodox", "Other"
+        ],
+        # Bible Versions
+        "bible_version": "KJV",  # e.g., "KJV", "WEB", "ASV", "ESV", "NLT"
+        "bible_version_options": [
+            "KJV (King James Version)",
+            "WEB (World English Bible)",
+            "ASV (American Standard Version)",
+            "NIV (New International Version)",
+            "RSVCE (Revised Standard Version Catholic Edition)",
+            "CSB (Christian Standard Bible)"
+        ],
+        # Personalization reasons (legacy, can be mapped to faith goals)
         "personalization_reasons": [
             "Fear of sharing faith",
             "Struggling to study",
             "Needing deeper connection"
         ],
-        
-        
         "tone_choices": [
             {
                 "name": "Clear and Hopeful",
@@ -122,7 +179,6 @@ def get_mock_user_data():
                 "example": "Sin doesn’t define us—God’s purpose does. You have the power to walk boldly in the freedom He’s given you."
             }
         ],
-        
         "bible_familiarity_options": [
             {
                 "level": "None",
@@ -140,7 +196,6 @@ def get_mock_user_data():
                 "description": "Multi-Argumentation Responses\nPreachly will provide multi-layered explanations, exploring different perspectives, theological arguments, and scriptural connections to help you sharpen your understanding."
             }
         ],
-        
         "bible_version": "NEW INTERNATIONAL VERSION"  # e.g., "NEW INTERNATIONAL VERSION", "REVISED STANDARD VERSION CATHOLIC EDITION", "CHRISTIAN STANDARD BIBLE"
     }
  
